@@ -1,24 +1,3 @@
-[package]
-name = "estrannaise_rs"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-crate-type = ["cdylib", "lib"]
-
-[[example]]
-name = "example"
-path = "examples/test.rs"
-
-[target.wasm32-unknown-unknown]
-rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
-
-[dependencies]
-console_log = { version = "1.0.0" }
-getrandom = { version = "0.3" }
-lazy_static = "1.5.0"
-log = "0.4.27"
-rand = { version = "0.9.1", features = [] }
-splines = "4.4.2"
-textplots = "0.8.7"
-wasm-bindgen = "0.2.100"
+[workspace]
+resolver = "3"
+members = ["estrannaise-rs-lib", "estrannaise-rs-web"]

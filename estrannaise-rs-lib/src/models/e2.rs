@@ -21,7 +21,7 @@ pub enum Type {
 }
 
 impl Type {
-    fn from_str(s: &str) -> Type {
+    pub fn from_str(s: &str) -> Type {
         match s {
             "EB im" => Type::EBim,
             "EV im" => Type::EVim,

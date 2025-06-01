@@ -1,6 +1,5 @@
 use lazy_static::lazy_static;
 use splines::*;
-use wasm_bindgen::prelude::*;
 
 enum Type {
     E2,
@@ -110,11 +109,17 @@ const fn menstrual_cycle_data(t: Type) -> [(u8, f32); 30] {
 }
 
 fn menstrual_cycle_spline(t: Type) -> Spline<f32, f32> {
-    menstrual_cycle_data(t)
-        .to_vec()
-        .iter()
-        .map(|x| Key::new(x.0.into(), x.1, Interpolation::CatmullRom))
-        .collect()
+    let data = menstrual_cycle_data(t);
+    let mut points = Vec::new();
+
+    for (i, point) in data.iter().enumerate() {
+        match i {
+            0 => points.push(Key::new(point.0 as f32, point.1, Interpolation::Linear)),
+            _ => points.push(Key::new(point.0 as f32, point.1, Interpolation::CatmullRom)),
+        }
+    }
+
+    Spline::<f32, f32>::from_vec(points)
 }
 
 lazy_static! {
@@ -126,7 +131,7 @@ lazy_static! {
         menstrual_cycle_spline(Type::E2P95);
 }
 
-#[wasm_bindgen]
+#[derive(Copy, Clone)]
 pub struct MenstrualCycleCurvePoint {
     pub Time: f32,
     pub E2: f32,
@@ -134,7 +139,6 @@ pub struct MenstrualCycleCurvePoint {
     pub E2p95: f32,
 }
 
-#[wasm_bindgen]
 pub fn fill_menstrual_cycle_curve(
     xmin: f32,
     xmax: f32,
@@ -160,7 +164,7 @@ pub fn fill_menstrual_cycle_curve(
                     .clamped_sample(curve_point)
                     .unwrap_or_default(),
         });
-        t = t + ((xmax - xmin) / (nbsteps - 1) as f32);
+        t = t + ((xmax - xmin) / (nbsteps as f32 - 1.0));
     }
 
     points

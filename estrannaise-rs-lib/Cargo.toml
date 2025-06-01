@@ -1,0 +1,25 @@
+[package]
+name = "estrannaise_rs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/rv32ima/estrannaise-rs"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[[example]]
+name = "example"
+path = "examples/test.rs"
+
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
+
+[dependencies]
+getrandom = { version = "0.3" }
+lazy_static = "1.5.0"
+rand = { version = "0.9.1", features = [] }
+splines = "4.4.2"
+
+[dev-dependencies]
+textplots = "0.8.7"
