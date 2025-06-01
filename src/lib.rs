@@ -1,9 +1,8 @@
-use wasm_bindgen::prelude::*;
-use log::Level;
+// use log::Level;
 
-mod models;
+pub mod models;
 
-#[wasm_bindgen(start)]
-fn start() {
-    console_log::init_with_level(Level::Debug).unwrap();
-}
+// #[wasm_bindgen(start)]
+// fn start() {
+//     console_log::init_with_level(Level::Debug).unwrap();
+// }

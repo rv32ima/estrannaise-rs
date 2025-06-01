@@ -1,9 +1,6 @@
 use rand::prelude::*;
-use wasm_bindgen::prelude::wasm_bindgen;
-
 
 #[derive(Clone, Copy)]
-#[wasm_bindgen]
 pub enum Type {
     // Estradiol Benzonate, intramuscular
     EBim,
@@ -24,23 +21,53 @@ pub enum Type {
 }
 
 impl Type {
-  fn from_str(s: &str) -> Type {
-    match s {
-      "EB im" => Type::EBim,
-      "EV im" => Type::EVim,
-      "EEn im" => Type::EEnim,
-      "EC im" => Type::ECim,
-      "EUn im" => Type::EUnim,
-      "EUn casubq" => Type::EUncasubq,
-      "patch tw" => Type::Patchtw,
-      "patch ow" => Type::Patchow,
-      _ => panic!("unknown type {:?}", s)
+    fn from_str(s: &str) -> Type {
+        match s {
+            "EB im" => Type::EBim,
+            "EV im" => Type::EVim,
+            "EEn im" => Type::EEnim,
+            "EC im" => Type::ECim,
+            "EUn im" => Type::EUnim,
+            "EUn casubq" => Type::EUncasubq,
+            "patch tw" => Type::Patchtw,
+            "patch ow" => Type::Patchow,
+            _ => panic!("unknown type {:?}", s),
+        }
     }
+}
+
+pub struct Dose {
+    dose: f32,
+    conversion_factor: f32,
+}
+
+impl Dose {
+  pub fn to_str(&self) -> String {
+    format!("{:}", self.dose)
   }
 }
 
+impl Dose {
+    pub fn from_f32(f: f32) -> Dose {
+        Dose {
+            dose: f,
+            conversion_factor: 1.0,
+        }
+    }
+
+    pub fn with_conversion_factor(&self, cf: f32) -> Dose {
+        Dose {
+            dose: self.dose,
+            conversion_factor: cf,
+        }
+    }
+
+    pub fn converted_dose(&self) -> f32 {
+        self.dose * self.conversion_factor
+    }
+}
+
 #[derive(Clone, Copy)]
-#[wasm_bindgen]
 pub struct Model {
     model_type: Type,
     units: &'static str,
@@ -48,9 +75,7 @@ pub struct Model {
     pk_params: PKParam,
 }
 
-
 #[derive(Clone, Copy)]
-#[wasm_bindgen]
 pub struct PKParam {
     d: f32,
     k1: f32,
@@ -58,125 +83,118 @@ pub struct PKParam {
     k3: f32,
 }
 
-#[wasm_bindgen]
-pub fn model_from_type(m: Type) -> Model {
-    match m {
-        Type::EVim => Model {
-            model_type: Type::EVim,
-            units: "mg",
-            description: "Estradiol Valerate, intramuscular",
-            pk_params: PKParam {
-                d: 478.0,
-                k1: 0.236,
-                k2: 4.85,
-                k3: 1.24,
-            },
-        },
-        Type::EBim => Model {
-            model_type: Type::EBim,
-            units: "mg",
-            description: "Estradiol Benzoate, intramuscular",
-            pk_params: PKParam {
-                d: 1893.1,
-                k1: 0.67,
-                k2: 61.5,
-                k3: 4.34,
-            },
-        },
-        Type::EEnim => Model {
-            model_type: Type::EEnim,
-            units: "mg",
-            description: "Estradiol Enanthate, intramuscular",
-            pk_params: PKParam {
-                d: 191.4,
-                k1: 0.119,
-                k2: 0.601,
-                k3: 0.402,
-            },
-        },
-        Type::ECim => Model {
-            model_type: Type::ECim,
-            units: "mg",
-            description: "Estradiol Cypionate, intramuscular",
-            pk_params: PKParam {
-                d: 246.0,
-                k1: 0.0825,
-                k2: 3.57,
-                k3: 0.669,
-            },
-        },
-        Type::EUnim => Model {
-            model_type: Type::EUnim,
-            units: "mg",
-            description: "Estradiol Undecylate, intramuscular",
-            pk_params: PKParam {
-                d: 471.5,
-                k1: 0.01729,
-                k2: 6.528,
-                k3: 2.285,
-            },
-        },
-        Type::EUncasubq => Model {
-            model_type: Type::EUncasubq,
-            units: "mg",
-            description: "Estradiol Undecylate in Castor Oil, subcutaneous",
-            pk_params: PKParam {
-                d: 16.15,
-                k1: 0.046,
-                k2: 0.022,
-                k3: 0.101,
-            },
-        },
-        Type::Patchtw => Model {
-            model_type: Type::Patchtw,
-            units: "mcg/day",
-            description: "Patch, twice weekly application",
-            pk_params: PKParam {
-                d: 16.792,
-                k1: 0.283,
-                k2: 5.592,
-                k3: 4.3,
-            },
-        },
-        Type::Patchow => Model {
-            model_type: Type::Patchow,
-            units: "mcg/day",
-            description: "Patch, once weekly application",
-            pk_params: PKParam {
-                d: 59.481,
-                k1: 0.107,
-                k2: 7.842,
-                k3: 5.193,
-            },
-        },
-    }
-}
-
-#[wasm_bindgen]
 impl Model {
-    pub fn pk_function(
-        &self,
-        conversion_factor: f32,
-        t: f32,
-        dose: f32,
-        steadystate: bool,
-        T: f32,
-    ) -> f32 {
-        let converted_dose = conversion_factor * dose;
+    pub fn to_str(&self) -> String {
+      self.description.to_string()
+    } 
 
+    pub fn from_type(t: Type) -> Model {
+        match t {
+            Type::EVim => Model {
+                model_type: Type::EVim,
+                units: "mg",
+                description: "Estradiol Valerate, intramuscular",
+                pk_params: PKParam {
+                    d: 478.0,
+                    k1: 0.236,
+                    k2: 4.85,
+                    k3: 1.24,
+                },
+            },
+            Type::EBim => Model {
+                model_type: Type::EBim,
+                units: "mg",
+                description: "Estradiol Benzoate, intramuscular",
+                pk_params: PKParam {
+                    d: 1893.1,
+                    k1: 0.67,
+                    k2: 61.5,
+                    k3: 4.34,
+                },
+            },
+            Type::EEnim => Model {
+                model_type: Type::EEnim,
+                units: "mg",
+                description: "Estradiol Enanthate, intramuscular",
+                pk_params: PKParam {
+                    d: 191.4,
+                    k1: 0.119,
+                    k2: 0.601,
+                    k3: 0.402,
+                },
+            },
+            Type::ECim => Model {
+                model_type: Type::ECim,
+                units: "mg",
+                description: "Estradiol Cypionate, intramuscular",
+                pk_params: PKParam {
+                    d: 246.0,
+                    k1: 0.0825,
+                    k2: 3.57,
+                    k3: 0.669,
+                },
+            },
+            Type::EUnim => Model {
+                model_type: Type::EUnim,
+                units: "mg",
+                description: "Estradiol Undecylate, intramuscular",
+                pk_params: PKParam {
+                    d: 471.5,
+                    k1: 0.01729,
+                    k2: 6.528,
+                    k3: 2.285,
+                },
+            },
+            Type::EUncasubq => Model {
+                model_type: Type::EUncasubq,
+                units: "mg",
+                description: "Estradiol Undecylate in Castor Oil, subcutaneous",
+                pk_params: PKParam {
+                    d: 16.15,
+                    k1: 0.046,
+                    k2: 0.022,
+                    k3: 0.101,
+                },
+            },
+            Type::Patchtw => Model {
+                model_type: Type::Patchtw,
+                units: "mcg/day",
+                description: "Patch, twice weekly application",
+                pk_params: PKParam {
+                    d: 16.792,
+                    k1: 0.283,
+                    k2: 5.592,
+                    k3: 4.3,
+                },
+            },
+            Type::Patchow => Model {
+                model_type: Type::Patchow,
+                units: "mcg/day",
+                description: "Patch, once weekly application",
+                pk_params: PKParam {
+                    d: 59.481,
+                    k1: 0.107,
+                    k2: 7.842,
+                    k3: 5.193,
+                },
+            },
+        }
+    }
+
+    pub fn simulate(&self, dose: &Dose, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
         match self.model_type {
             Type::EVim | Type::EEnim | Type::ECim | Type::EUnim | Type::EUncasubq | Type::EBim => {
                 e2_curve_3c(
                     t,
-                    converted_dose,
+                    dose.converted_dose(),
                     self.pk_params.d,
                     self.pk_params.k1,
                     self.pk_params.k2,
                     self.pk_params.k3,
                     0.0,
                     0.0,
-                    steadystate,
-                    T,
+                    steady_state,
+                    dosing_interval,
                 )
             }
             // TODO: patch models
@@ -184,41 +202,32 @@ impl Model {
         }
     }
 
-    pub fn pk_rand_function(
-      &self,
-      conversion_factor: f32,
-      t: f32,
-      dose: f32,
-      steadystate: bool,
-      T: f32
-    ) -> f32 {
-      let converted_dose = conversion_factor * dose;
-      let pk_params = mcmc_sample(self.model_type, None).unwrap();
+    pub fn simulate_rand(&self, dose: &Dose, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
+        let pk_params = mcmc_sample(self.model_type, None).unwrap();
 
-      match self.model_type {
-          Type::EVim | Type::EEnim | Type::ECim | Type::EUnim | Type::EUncasubq | Type::EBim => {
-              e2_curve_3c(
-                  t,
-                  converted_dose,
-                  pk_params[0],
-                  pk_params[1],
-                  pk_params[2],
-                  pk_params[3],
-                  0.0,
-                  0.0,
-                  steadystate,
-                  T,
-              )
-          }
-          // TODO: patch models
-          _ => unimplemented!(),
-      }
-
+        match self.model_type {
+            Type::EVim | Type::EEnim | Type::ECim | Type::EUnim | Type::EUncasubq | Type::EBim => {
+                e2_curve_3c(
+                    t,
+                    dose.converted_dose(),
+                    pk_params[0],
+                    pk_params[1],
+                    pk_params[2],
+                    pk_params[3],
+                    0.0,
+                    0.0,
+                    steady_state,
+                    dosing_interval,
+                )
+            }
+            // TODO: patch models
+            _ => unimplemented!(),
+        }
     }
 
     pub fn from_str(s: &str) -> Model {
-      let ty = Type::from_str(s);
-      model_from_type(ty)
+        let ty = Type::from_str(s);
+        Model::from_type(ty)
     }
 }
 

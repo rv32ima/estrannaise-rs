@@ -1,2 +1,2 @@
-mod menstrual_cycle;
-mod e2;
+pub mod menstrual_cycle;
+pub mod e2;
