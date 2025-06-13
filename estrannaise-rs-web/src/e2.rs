@@ -47,12 +47,12 @@ impl ModelWrapper {
       ModelWrapper(Model::from_type(t.0))
     }
 
-    pub fn simulate(&self, dose: &DoseWrapper, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
-      self.0.simulate(&dose.0, t, steady_state, dosing_interval)
+    pub fn simulate(&self, dose: &DoseWrapper, t: f32, dosing_interval: f32) -> f32 {
+      self.0.simulate(&dose.0, t, dosing_interval)
     }
 
-    pub fn simulate_rand(&self, dose: &DoseWrapper, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
-      self.0.simulate_rand(&dose.0, t, steady_state, dosing_interval)
+    pub fn simulate_rand(&self, dose: &DoseWrapper, t: f32, dosing_interval: f32) -> f32 {
+      self.0.simulate_rand(&dose.0, t, dosing_interval)
     }
 
 } 

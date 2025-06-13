@@ -42,9 +42,9 @@ pub struct Dose {
 }
 
 impl Dose {
-  pub fn to_str(&self) -> String {
-    format!("{:}", self.dose)
-  }
+    pub fn to_str(&self) -> String {
+        format!("{:}", self.dose)
+    }
 }
 
 impl Dose {
@@ -83,10 +83,32 @@ pub struct PKParam {
     k3: f32,
 }
 
+impl From<[f32; 4]> for PKParam {
+    fn from(value: [f32; 4]) -> PKParam {
+        PKParam {
+            d: value[0],
+            k1: value[1],
+            k2: value[2],
+            k3: value[3],
+        }
+    }
+}
+
+impl From<&[f32; 4]> for PKParam {
+    fn from(value: &[f32; 4]) -> PKParam {
+        PKParam {
+            d: value[0],
+            k1: value[1],
+            k2: value[2],
+            k3: value[3],
+        }
+    }
+}
+
 impl Model {
     pub fn to_str(&self) -> String {
-      self.description.to_string()
-    } 
+        self.description.to_string()
+    }
 
     pub fn from_type(t: Type) -> Model {
         match t {
@@ -181,19 +203,15 @@ impl Model {
         }
     }
 
-    pub fn simulate(&self, dose: &Dose, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
+    pub fn simulate(&self, dose: &Dose, t: f32, dosing_interval: f32) -> f32 {
         match self.model_type {
             Type::EVim | Type::EEnim | Type::ECim | Type::EUnim | Type::EUncasubq | Type::EBim => {
                 e2_curve_3c(
                     t,
                     dose.converted_dose(),
-                    self.pk_params.d,
-                    self.pk_params.k1,
-                    self.pk_params.k2,
-                    self.pk_params.k3,
+                    self.pk_params,
                     0.0,
                     0.0,
-                    steady_state,
                     dosing_interval,
                 )
             }
@@ -202,7 +220,12 @@ impl Model {
         }
     }
 
-    pub fn simulate_rand(&self, dose: &Dose, t: f32, steady_state: bool, dosing_interval: f32) -> f32 {
+    pub fn simulate_rand(
+        &self,
+        dose: &Dose,
+        t: f32,
+        dosing_interval: f32,
+    ) -> f32 {
         let pk_params = mcmc_sample(self.model_type, None).unwrap();
 
         match self.model_type {
@@ -210,13 +233,9 @@ impl Model {
                 e2_curve_3c(
                     t,
                     dose.converted_dose(),
-                    pk_params[0],
-                    pk_params[1],
-                    pk_params[2],
-                    pk_params[3],
+                    pk_params.into(),
                     0.0,
                     0.0,
-                    steady_state,
                     dosing_interval,
                 )
             }
@@ -243,26 +262,19 @@ fn logsubexp(x: f32, y: f32) -> f32 {
     }
 }
 
-fn e2_curve_3c(
-    t: f32,
-    dose: f32,
-    d: f32,
-    k1: f32,
-    k2: f32,
-    k3: f32,
-    ds: f32,
-    d2: f32,
-    steadystate: bool,
-    T: f32,
-) -> f32 {
-    if steadystate {
-        return e2_steady_state_3c(t, dose, T, d, k1, k2, k3);
+fn e2_curve_3c(t: f32, dose: f32, pkp: PKParam, ds: f32, d2: f32, dosing_interval: f32) -> f32 {
+    if dosing_interval > 0.0 {
+        return e2_steady_state_3c(t, dose, dosing_interval, pkp);
     }
 
     if t < 0.0 {
         return 0.0;
     }
 
+    let d = pkp.d;
+    let k1 = pkp.k1;
+    let k2 = pkp.k2;
+    let k3 = pkp.k3;
     let mut ret = 0.0;
 
     if d2 > 0.0 {
@@ -329,31 +341,37 @@ fn e2_curve_3c(
     if ret.is_nan() { 0.0 } else { ret }
 }
 
-fn e2_steady_state_3c(t: f32, dose: f32, T: f32, d: f32, k1: f32, k2: f32, k3: f32) -> f32 {
+fn e2_steady_state_3c(t: f32, dose: f32, dosing_interval: f32, pkp: PKParam) -> f32 {
+    let d = pkp.d;
+    let k1 = pkp.k1;
+    let k2 = pkp.k2;
+    let k3 = pkp.k3;
+
     dose * d
         * k1
         * k2
-        * (f32::exp(-k1 * (t - T * f32::floor(t / T)))
-            / (1.0 - f32::exp(-k1 * T))
+        * (f32::exp(-k1 * (t - dosing_interval * f32::floor(t / dosing_interval)))
+            / (1.0 - f32::exp(-k1 * dosing_interval))
             / (k1 - k2)
             / (k1 - k3)
-            - f32::exp(-k2 * (t - T * f32::floor(t / T)))
-                / (1.0 - f32::exp(-k2 * T))
+            - f32::exp(-k2 * (t - dosing_interval * f32::floor(t / dosing_interval)))
+                / (1.0 - f32::exp(-k2 * dosing_interval))
                 / (k1 - k2)
                 / (k2 - k3)
-            + f32::exp(-k3 * (t - T * f32::floor(t / T)))
-                / (1.0 - f32::exp(-k3 * T))
+            + f32::exp(-k3 * (t - dosing_interval * f32::floor(t / dosing_interval)))
+                / (1.0 - f32::exp(-k3 * dosing_interval))
                 / (k1 - k3)
                 / (k2 - k3))
 }
 
-fn mcmc_sample(m: Type, idx: Option<usize>) -> Option<[f32; 4]> {
+fn mcmc_sample(m: Type, idx: Option<usize>) -> Option<PKParam> {
     let samples = mcmc_samples_pk(m);
+    let sample = match idx {
+        Some(idx) => samples.get(idx),
+        None => samples.choose(&mut rand::rng()),
+    };
 
-    match idx {
-        Some(idx) => Some(samples[idx]),
-        None => samples.to_vec().choose(&mut rand::rng()).copied(),
-    }
+    sample.map(|x| x.into())
 }
 
 const fn mcmc_samples_pk(m: Type) -> &'static [[f32; 4]] {

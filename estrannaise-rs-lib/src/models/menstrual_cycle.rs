@@ -133,10 +133,10 @@ lazy_static! {
 
 #[derive(Copy, Clone)]
 pub struct MenstrualCycleCurvePoint {
-    pub Time: f32,
-    pub E2: f32,
-    pub E2p5: f32,
-    pub E2p95: f32,
+    pub time: f32,
+    pub e2: f32,
+    pub e2p5: f32,
+    pub e2p95: f32,
 }
 
 pub fn fill_menstrual_cycle_curve(
@@ -150,16 +150,16 @@ pub fn fill_menstrual_cycle_curve(
     while t <= xmax {
         let curve_point = ((t % 28.0) + 28.0) % 28.0;
         points.push(MenstrualCycleCurvePoint {
-            Time: t,
-            E2: conversion_factor
+            time: t,
+            e2: conversion_factor
                 * MENSTRUAL_CYCLE_SPLINE
                     .clamped_sample(curve_point)
                     .unwrap_or_default(),
-            E2p5: conversion_factor
+            e2p5: conversion_factor
                 * MENSTRUAL_CYCLE_SPLINE_P05
                     .clamped_sample(curve_point)
                     .unwrap_or_default(),
-            E2p95: conversion_factor
+            e2p95: conversion_factor
                 * MENSTRUAL_CYCLE_SPLINE_P95
                     .clamped_sample(curve_point)
                     .unwrap_or_default(),

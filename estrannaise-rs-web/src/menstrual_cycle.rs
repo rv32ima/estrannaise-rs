@@ -10,22 +10,22 @@ pub struct MenstrualCycleCurvePointWrapper(MenstrualCycleCurvePoint);
 impl MenstrualCycleCurvePointWrapper {
   #[wasm_bindgen(getter)]
   pub fn Time(&self) -> f32 {
-    self.0.Time
+    self.0.time
   }
 
   #[wasm_bindgen(getter)]
   pub fn E2(&self) -> f32 {
-    self.0.E2
+    self.0.e2
   }
 
   #[wasm_bindgen(getter)]
   pub fn E2p5(&self) -> f32 {
-    self.0.E2p5
+    self.0.e2p5
   }
 
   #[wasm_bindgen(getter)]
   pub fn E2p95(&self) -> f32 {
-    self.0.E2p95
+    self.0.e2p95
   }
 }
 

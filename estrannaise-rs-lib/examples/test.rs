@@ -10,7 +10,7 @@ fn main() {
 
     Chart::new(150, 80, 0.0, 30.0)
         .lineplot(&textplots::Shape::Continuous(Box::new(|x| {
-            model.simulate(&dose, x, true, dosing_interval)
+            model.simulate(&dose, x, dosing_interval)
         })))
         .display();
 }
